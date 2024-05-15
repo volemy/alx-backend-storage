@@ -19,6 +19,26 @@ class Cache:
         self._redis.flushdb() # Flush the redis database
         self._call_counts = {} # Initializes call counts dictionary
 
+    @functool.lru_cache()
+    def __get_keys(self, method: Callable) -> str:
+        """
+        This method gets the key for the call count of provided method.
+        """
+        return method.__qualname__
+
+    def count_calls(self, method: Callable) -> Callable:
+        """
+        Decorator to vount the number of times a method is called
+        """
+        @functools.wraps(method)
+        def wrapper(*args, **kwargs):
+            key = self.__get_key(method)
+            self._redis.incr(key)
+            result = method(*args, **kwargs)
+            self._call_counts[key] = self._redis.get(key)
+            return result
+        return wrapper
+
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """
         This function stores data in Redis using a randomly generated key
@@ -52,3 +72,13 @@ class Cache:
         key.
         """
         return self.get(key, int)
+
+    def get_call_count(self, method: Callable) -> int:
+        """
+        This method gets the number of times provided method has been called
+        """
+        key = self.__get_key(method)
+        return int(self._call_counts.get(key, 0))
+
+cache = Cache()
+cache.store = cache.count_calls(cache.store)
