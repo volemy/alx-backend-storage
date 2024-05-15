@@ -15,11 +15,12 @@ def count_calls(method: Callable) -> Callable:
     Decorator that takes a single argument and returns a callable
     """
     @wraps(method)
-    def wrapper(self, *args, **kwargs):
-        key = method.__qualname__
-        self._redis.inc(key)
-            return method(self, *args, **kwargs)
-        return wrapper
+    def wrapper(self, *args, **kwargs) -> Any:
+        key = "count:{}".format(method.__qualname__)
+        self._redis.incr(key)
+        return method(self, *args, **kwargs)
+
+    return wrapper
 
 
 def call_history(method: Callable) -> Callable:
@@ -61,7 +62,9 @@ class Cache:
         """
         self._redis = redis.Redis()
         self._redis.flushdb() # Flush the redis database
-
+    
+    @count_calls
+    @call_history
     def store(self, data: Union[str, bytes, int, float]) -> str:
         """
         This function stores data in Redis using a randomly generated key
