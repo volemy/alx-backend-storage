@@ -28,7 +28,7 @@ def call_history(method: Callable) -> Callable:
     """
     @wraps(method)
     def wrapper(self, *args, **kwargs):
-        input_key = "{}:inputs".format(method.__qualname__)
+        input_key = f"{method.__qualname__}:inputs"
         output_key = f"{method.__qualname__}:outputs"
 
         self._redis.rpush(input_key, str(args))
@@ -44,18 +44,24 @@ def replay(method: Callable):
     """
     This method displays the history of calls of a particular function
     """
-    input_key = "{}:inputs".format(method.__qualname__)
-    output_key = "{}:outputs".format(method.__qualname__)
+    method_name = method.__qualname__
+    instance = method.__self__
+    output_key = f"{method_name}:outputs"
+    input_key = f"{method_name}:inputs"
 
     inputs = self._redis.lrange(input_key, 0, -1)
     outputs = self._redis.lrange(output_key, 0. -1)
 
-    print("{} was called {} times:".format(method.__qualname__, len(inputs)))
+    print(f"{method_name} was called {len(inputs)} times:")
     for input_data, output_data in zip(inputs, outputs):
-        args = eval(input_data.decode("utf-8"))
-        print("Cache.{}(*{}) -> {}".format(method.__qualname__, args, output_data))
+        print(f"{method_name}(*{input_data.decode()}) -> {output_data.decode()}")
+
 
 class Cache:
+    """
+    Method class  for storing and retrieving data
+    """
+
     def __init__(self):
         """
         This method initializes the cache class with a Redis client instance
