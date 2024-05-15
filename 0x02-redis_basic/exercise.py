@@ -15,11 +15,10 @@ def count_calls(method: Callable) -> Callable:
     Decorator that takes a single argument and returns a callable
     """
     @wraps(method)
-    def wrapper(self, *args, **kwargs) -> Any:
-        key = "count:{}".format(method.__qualname__)
+    def wrapper(self, *args, **kwargs):
+        key = method.__qualname__
         self._redis.incr(key)
         return method(self, *args, **kwargs)
-
     return wrapper
 
 
@@ -30,11 +29,12 @@ def call_history(method: Callable) -> Callable:
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         input_key = "{}:inputs".format(method.__qualname__)
+        output_key = f"{method.__qualname__}:outputs"
+
         self._redis.rpush(input_key, str(args))
 
-        output = method(*args, **kwargs)
-        output_key = "{}:outputs".format(method.__qualname__)
-        self._redis.rpush(output_key, output)
+        output = method(self, *args, **kwargs)
+        self._redis.rpush(output_key, str(output)
 
         return output
     return wrapper
