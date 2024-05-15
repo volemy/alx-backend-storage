@@ -28,7 +28,7 @@ class Cache:
         return key
 
     def get(self, key: str,
-            fn: Optional[Callable[[bytes], any]] = None) -> any:
+            fn: Optional[Callable[[bytes], Any]] = None) -> any:
         """
         This method retrives the value from redis using provided key.
         Returns returieved value, or None if the key does not exist.
@@ -40,13 +40,13 @@ class Cache:
             return fn(value)
         return value
     
-    def get_str(self, key: str) -> str:
+    def get_str(self, key: str) -> Optional[str]:
         """
         This method retrieves a string value from Redis using the provided key
         """
         return self.get(key, lambda d: d.decode("utf-8"))
 
-    def get_init(self, key: str) -> int:
+    def get_init(self, key: str) -> Optional[int]:
         """
         This method retrieves an integer value from Redis using the provided
         key.
