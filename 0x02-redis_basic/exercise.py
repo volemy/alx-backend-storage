@@ -7,16 +7,18 @@ randomly generated keys.
 import redis
 import uuid
 import functools import wraps
-from typing import Union, Callable, Optional
+from typing import Union, Callable, Optional, Any
 
 
 def count_calls(method: Callable) -> Callable:
     """
     Decorator that takes a single argument and returns a callable
     """
+    key = method.__qualname__
+
     @wraps(method)
     def wrapper(self, *args, **kwargs):
-        key = method.__qualname__
+        """ wrapper function"""
         self._redis.incr(key)
         return method(self, *args, **kwargs)
     return wrapper
@@ -26,35 +28,38 @@ def call_history(method: Callable) -> Callable:
     """
     Decorator to store the history of inputs and outputs 
     """
+    input_key = method.__qualname__ + ":inputs"
+    output_key = method.__qualname__ + ":outputs"
+
     @wraps(method)
-    def wrapper(self, *args, **kwargs):
-        input_key = f"{method.__qualname__}:inputs"
-        output_key = f"{method.__qualname__}:outputs"
+    def wrapper(self, *args) -> bytes:
+        """ wrapper function"""
 
         self._redis.rpush(input_key, str(args))
-
-        output = method(self, *args, **kwargs)
-        self._redis.rpush(output_key, str(output)
-
+        output = method(self, *args)
+        self._redis.rpush(output_key, (output)
         return output
     return wrapper
 
 
-def replay(method: Callable):
+def replay(method: Callable) -> None:
     """
     This method displays the history of calls of a particular function
     """
     method_name = method.__qualname__
-    instance = method.__self__
-    output_key = f"{method_name}:outputs"
-    input_key = f"{method_name}:inputs"
+    cache = redis.Redis()
 
-    inputs = self._redis.lrange(input_key, 0, -1)
-    outputs = self._redis.lrange(output_key, 0. -1)
+    Call = cache.get(method_name).decode("utf-8")
 
-    print(f"{method_name} was called {len(inputs)} times:")
+
+    inputs = self._redis.lrange(method_name + ":inputs", 0, -1)
+    outputs = self._redis.lrange(method_name + ":outputs", 0, -1)
+
+    print(f"{method_name} was called {call} times:")
+
     for input_data, output_data in zip(inputs, outputs):
-        print(f"{method_name}(*{input_data.decode()}) -> {output_data.decode()}")
+        print("{}(*{}) -> {}".format(name,
+              input_data.decode('utf-8'), output_data.decode('utf-8)))
 
 
 class Cache:
