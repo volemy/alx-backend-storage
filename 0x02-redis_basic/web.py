@@ -6,45 +6,37 @@ This module implements the get_page function.
 import redis
 import requests
 from functools import wraps
+from typing import Callable
 
 
 # connect redis
 r = redis.Redis(decode_responses=True)
 
 
-def count_url_acess(func):
+def count_acess_request(method: Callable) -> Callable:
     """
-    Decorator function with a count
+    Decorator function which counts number of requests made to a url and caches
+    response
     """
+
     @wraps(func)
     def wrapper(url):
-        count_key = f"count:{url}"
-        r.incr(count_key)
-        return func(url)
-    return wrapper
+        """wrapper function"""
+        r.incr(f"count:{url}")
+        cached_data = r.get(f"cached:{url}")
 
-
-def cache_response(func):
-    """
-    Decorator to cache the result of the get page function.
-    """
-    @wraps(func)
-    def wrapper(url):
-        cache_key = f"cache:{url}"
-        cached_data = r.get(cache_key)
         if cached_data:
-            return cached_data
+            return cached_data.decode('utf-8')
+        #otherwise
+        result = method(url)
 
-        result = func(url)
-        if isinstance(result, (bytes, bytearray)):
-            result = result.decode('utf-8')
-        r.setex(cache_key, 10, result)
+        r.setex(f"cached:{url}", 10, result)
+
         return result
+
     return wrapper
 
 
-@count_url_access
-@cache_response
 def get_page(url: str) -> str:
     """
     This function fetches HTML content of a particular url and returns it.
