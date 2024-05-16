@@ -8,7 +8,6 @@ import requests
 from functools import wraps
 from typing import Callable
 
-
 # connect redis
 r = redis.Redis(decode_responses=True)
 
@@ -19,7 +18,7 @@ def count_acess_request(method: Callable) -> Callable:
     response
     """
 
-    @wraps(func)
+    @wraps(method)
     def wrapper(url):
         """wrapper function"""
         r.incr(f"count:{url}")
