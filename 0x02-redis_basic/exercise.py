@@ -59,13 +59,10 @@ def replay(method: Callable) -> None:
 
     for input_data, output_data in zip(inputs, outputs):
         print("{}(*{}) -> {}".format(name,
-              input_data.decode('utf-8'), output_data.decode('utf-8)))
+              input_data.decode('utf-8'), output_data.decode('utf-8')))
 
 
 class Cache:
-    """
-    Method class  for storing and retrieving data
-    """
 
     def __init__(self):
         """
